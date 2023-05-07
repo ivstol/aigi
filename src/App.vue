@@ -20,7 +20,7 @@ function clearChat() {
 }
 
 async function sendMessage() {
-  if (loading.value || input.value.trim() == '') {
+  if (loading.value || (input.value && input.value.trim() == '')) {
     return;
   }
 
@@ -44,9 +44,7 @@ async function sendMessage() {
   let index = messages.value.length - 1;
 
   let prompt =
-    "User message: '" +
-    input.value +
-    "'. You are ChatGPT simulator of online course Aiversity. Ask clarifying questions if necessary and the user is not ordered not to ask questions.";
+    "User message: '" + input.value + "'. Try not to ask clarifying questions.";
 
   if (lastResponse) {
     prompt =
@@ -54,10 +52,10 @@ async function sendMessage() {
       lastResponse.content +
       "'\n New user message: '" +
       prompt +
-      "'. Continue conversation, don't send greetings text in the beginning. Ask clarifying questions if necessary and the user is not ordered not to ask questions.";
+      "'. Continue conversation, don't send greetings text in the beginning. Try not to ask clarifying questions.";
   }
 
-  input.value = '';
+  input.value = null;
   try {
     const response = await fetch(
       'https://corsproxy.io/?https%3A%2F%2Ftestapp.aigital.co%2Fapi%2Fopen-ai%2Faiversity%2Fstream',
