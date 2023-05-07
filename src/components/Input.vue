@@ -11,11 +11,20 @@
 <script setup>
 import autosize from 'autosize';
 
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch, nextTick } from 'vue';
 const props = defineProps(['modelValue']);
 const textarea = ref();
 
 const emit = defineEmits(['submit', 'update:modelValue']);
+
+watch(
+  () => props.modelValue,
+  (value) => {
+    nextTick(() => {
+      autosize.update(textarea.value);
+    });
+  }
+);
 
 onMounted(() => {
   autosize(textarea.value);
