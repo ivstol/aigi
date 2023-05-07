@@ -43,7 +43,10 @@ async function sendMessage() {
   });
   let index = messages.value.length - 1;
 
-  let prompt = input.value;
+  let prompt =
+    "User message: '" +
+    input.value +
+    "'. You are ChatGPT simulator of online course Aiversity. Ask clarifying questions if necessary and the user is not ordered not to ask questions.";
 
   if (lastResponse) {
     prompt =
@@ -51,45 +54,57 @@ async function sendMessage() {
       lastResponse.content +
       "'\n New user message: '" +
       prompt +
-      "'. Continue conversation, don't send greetings text in the beginning.";
+      "'. Continue conversation, don't send greetings text in the beginning. Ask clarifying questions if necessary and the user is not ordered not to ask questions.";
   }
 
   input.value = '';
-
-  const response = await fetch(
-    'https://corsproxy.io/?https%3A%2F%2Ftestapp.aigital.co%2Fapi%2Fopen-ai%2Faiversity%2Fstream',
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        promptParams: {
-          prompt: prompt,
+  try {
+    const response = await fetch(
+      'https://corsproxy.io/?https%3A%2F%2Ftestapp.aigital.co%2Fapi%2Fopen-ai%2Faiversity%2Fstream',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      }),
+        body: JSON.stringify({
+          promptParams: {
+            prompt: prompt,
+          },
+        }),
+      }
+    );
+
+    const reader = response.body.getReader();
+    let text = '';
+
+    messages.value[index].content = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done || new TextDecoder().decode(value).includes('data: [DONE]')) {
+        loading.value = false;
+        break;
+      }
+
+      messages.value[index].content += new TextDecoder()
+        .decode(value)
+        .replace(/\n\n/g, '')
+        .replace(/\[BREAK\]/g, '\n')
+        .replace(/data: /g, '');
+
+      frameContainer.value.scrollToBottom();
     }
-  );
+  } catch (error) {
+    loading.value = false;
 
-  const reader = response.body.getReader();
-  let text = '';
+    let errorResponse = messages.value
+      .filter((item) => item.from === 'aigital')
+      .slice(-1)
+      .pop();
 
-  messages.value[index].content = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-
-    if (done || new TextDecoder().decode(value).includes('data: [DONE]')) {
-      loading.value = false;
-      break;
-    }
-
-    messages.value[index].content += new TextDecoder()
-      .decode(value)
-      .replace(/\n\n/g, '')
-      .replace(/\[BREAK\]/g, '\n')
-      .replace(/data: /g, '');
-
+    errorResponse.from = 'error';
+    errorResponse.content = '';
     frameContainer.value.scrollToBottom();
   }
 }

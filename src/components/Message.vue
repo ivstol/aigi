@@ -3,8 +3,11 @@
     <div class="messageInner aigitalMessage" v-if="props.from == 'aigital'">
       {{ content }}
     </div>
-    <div class="messageInner userMessage" v-else>
+    <div class="messageInner userMessage" v-if="props.from == 'user'">
       {{ content }}
+    </div>
+    <div class="messageInner errorMessage" v-if="props.from == 'error'">
+      Произошла ошибка. Попробуйте снова или перезагрузите страницу.
     </div>
   </div>
 </template>
@@ -31,6 +34,11 @@ const props = defineProps(['from', 'content']);
 
 .aigitalMessage {
   background-color: #f1f1f1;
+}
+
+.errorMessage {
+  background-color: #db4317;
+  color: white;
 }
 
 .userMessage {
