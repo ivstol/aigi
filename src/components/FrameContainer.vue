@@ -1,6 +1,7 @@
 <template>
   <div class="container">
     <div ref="content" class="content">
+      <slot></slot>
       <div class="messages">
         <slot name="messages"></slot>
       </div>

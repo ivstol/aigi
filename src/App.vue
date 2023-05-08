@@ -13,14 +13,30 @@ const loading = ref(false);
 
 const frameContainer = ref();
 
+const promptSuggestion = ref();
+
+onMounted(() => {
+  let urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('prompt')) {
+    promptSuggestion.value = urlParams.get('prompt');
+  }
+});
+
 function clearChat() {
   if (!loading.value) {
     messages.value = [];
   }
 }
 
-async function sendMessage() {
-  if (loading.value || (input.value && input.value.trim() == '')) {
+async function sendMessage(fromSuggestion = false) {
+  let message = null;
+  if (fromSuggestion) {
+    message = promptSuggestion.value;
+  } else {
+    message = input.value;
+  }
+
+  if (loading.value || (message && message.trim() == '')) {
     return;
   }
 
@@ -32,7 +48,7 @@ async function sendMessage() {
   loading.value = true;
   messages.value.push({
     from: 'user',
-    content: input.value,
+    content: message,
   });
 
   frameContainer.value.scrollToBottom();
@@ -43,8 +59,7 @@ async function sendMessage() {
   });
   let index = messages.value.length - 1;
 
-  let prompt =
-    "User message: '" + input.value + "'. Try not to ask clarifying questions.";
+  let prompt = message;
 
   if (lastResponse) {
     prompt =
@@ -111,7 +126,40 @@ async function sendMessage() {
 <template>
   <div>
     <FrameContainer ref="frameContainer">
-      <template v-slot:messages>
+      <div
+        v-if="promptSuggestion && messages.length < 1"
+        style="
+          display: flex;
+          width: 100%;
+          align-items: center;
+          justify-content: space-around;
+          padding: 20px 0;
+        "
+      >
+        <div
+          style="text-align: center; cursor: pointer"
+          @click="sendMessage(true)"
+        >
+          <div style="padding-bottom: 15px">Пример запроса</div>
+          <div
+            style="
+              padding: 10px;
+              background-color: #f0f9ff;
+              border: solid 1px #2a65df;
+              color: #2a65df;
+              width: 80%;
+              margin: auto;
+              border-radius: 10px;
+            "
+          >
+            {{ promptSuggestion }}
+          </div>
+          <div style="text-size: 10px; opacity: 0.5; padding-top: 10px">
+            Нажмите, чтобы отправить это сообщение
+          </div>
+        </div>
+      </div>
+      <template v-slot:messages v-if="messages.length > 0">
         <Message
           v-for="message in messages"
           :from="message.from"
@@ -140,10 +188,10 @@ async function sendMessage() {
         </div>
       </template>
       <template v-slot:input>
-        <Input v-model="input" @submit="sendMessage" />
+        <Input v-model="input" @submit="sendMessage(false)" />
       </template>
       <template v-slot:sendButton>
-        <button class="sendButton" @click="sendMessage">
+        <button class="sendButton" @click="sendMessage(false)">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
